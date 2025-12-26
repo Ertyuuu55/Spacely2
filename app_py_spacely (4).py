@@ -3,10 +3,10 @@ import pandas as pd
 import re
 
 ICON_MAP = {
-    "table": "🪑",
+    "table": "🪵",
     "chair": "💺",
     "sofa": "🛋️",
-    "desk": "🖥️",
+    "desk": "🗄️",
     "bed": "🛏️"
 }
 
