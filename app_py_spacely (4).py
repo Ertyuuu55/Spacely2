@@ -86,31 +86,43 @@ def consolidated_prioritized_greedy_selection_with_quantities(df, budget, desire
 
 # 3. Parsing Function
 def parse_user_prompt(prompt, df):
-    prompt_lower = prompt.lower()
+    prompt = prompt.lower()
+
     categories = df['category'].str.lower().unique()
 
-    # 1️⃣ Ambil semua angka
-    numbers = re.findall(r'\d{1,3}(?:\.\d{3})+|\d+', prompt_lower)
+    # Ambil semua angka (25.000 → 25000)
+    numbers = re.findall(r'\d{1,3}(?:\.\d{3})+|\d+', prompt)
     if not numbers:
         return None, None, "Budget tidak ditemukan."
 
-    values = [int(n.replace('.', '')) for n in numbers]
+    cleaned_numbers = [int(n.replace('.', '')) for n in numbers]
 
-    # 2️⃣ Budget = angka TERBESAR
-    budget = max(values)
+    # Budget = angka terbesar
+    budget = max(cleaned_numbers)
 
-    # 3️⃣ Deteksi kategori + quantity (PER KATEGORI)
     desired = []
 
     for cat in categories:
-        # cari "table 2" atau "table"
-        match = re.search(rf'\b{cat}\b\s*(\d+)?', prompt_lower)
-        if match:
-            qty = int(match.group(1)) if match.group(1) else 1
-            desired.append({
-                "category": cat,
-                "quantity": qty
-            })
+        # Pola: "bed 2"
+        match_after = re.search(rf'\b{cat}\s+(\d+)', prompt)
+        # Pola: "2 bed"
+        match_before = re.search(rf'(\d+)\s+{cat}\b', prompt)
+
+        if match_after:
+            qty = int(match_after.group(1))
+        elif match_before:
+            qty = int(match_before.group(1))
+        else:
+            # kategori disebut tanpa jumlah → default 1
+            if re.search(rf'\b{cat}\b', prompt):
+                qty = 1
+            else:
+                continue
+
+        desired.append({
+            "category": cat,
+            "quantity": qty
+        })
 
     return budget, desired, None
 
@@ -131,8 +143,9 @@ def select_furniture_based_on_request(df, budget, requested_items):
                 if total_cost + item['price'] <= budget:
                     selected_items.append(item.to_dict())
                     total_cost += item['price']
-                else:
-                    messages.append("Budget tidak mencukupi")
+                    
+        if not selected_items:
+            messages.append("Budget tidak mencukupi untuk membeli furniture apa pun.")
 
         return selected_items, total_cost, messages
 
@@ -141,7 +154,7 @@ def select_furniture_based_on_request(df, budget, requested_items):
         category = req['category']
         qty = req['quantity']
 
-        cat_items = df[df['category'] == category].sort_values('price')
+        cat_items = df[df['category'].str.lower() == category.lower()].sort_values('price')
 
         if cat_items.empty:
             messages.append(f"Tidak ada item untuk kategori {category}")
@@ -156,9 +169,10 @@ def select_furniture_based_on_request(df, budget, requested_items):
                 total_cost += row['price']
                 selected_qty += 1
 
-        messages.append(
-            f"Menampilkan {selected_qty} item untuk kategori '{category}'."
-        )
+        if selected_qty > 0:
+            messages.append(
+                f"Menampilkan {selected_qty} item untuk kategori '{category}'."
+            )
 
     return selected_items, total_cost, messages
 
@@ -180,13 +194,13 @@ if st.button("Generate Recommendations"):
         st.error("Input tidak boleh kosong atau budget tidak ditemukan. Pastikan Anda menyertakan 'Budget [jumlah]' atau 'Rp [jumlah]'.")
     else:
         user_budget, user_desired_categories, error = parse_user_prompt(user_prompt, df)
-        USD_TO_IDR = 16000
-        user_budget_idr = user_budget
-        user_budget_usd = user_budget_idr / USD_TO_IDR
-
+        
         if error:
             st.error(error)
         else:
+            USD_TO_IDR = 16000
+            user_budget_idr = user_budget
+            user_budget_usd = user_budget_idr / USD_TO_IDR
             st.markdown("""
             <style>
             .furniture-card {
