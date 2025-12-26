@@ -182,35 +182,35 @@ user_prompt = st.text_input(
 )
 
 # Process user categories and quantities input
-user_desired_categories_with_quantities = []
-if user_categories_quantities_input:
-    for item_str in user_categories_quantities_input.split(','):
-        item_str = item_str.strip()
-        if not item_str:
-            continue
+# user_desired_categories_with_quantities = []
+# if user_categories_quantities_input:
+#     for item_str in user_categories_quantities_input.split(','):
+#         item_str = item_str.strip()
+#         if not item_str:
+#             continue
 
-        parts = item_str.split(':')
-        category = parts[0].strip()
-        quantity = 1 # Default quantity if not specified
+#         parts = item_str.split(':')
+#         category = parts[0].strip()
+#         quantity = 1 # Default quantity if not specified
 
-        if category not in df['category'].unique():
-            st.warning(f"Warning: Category '{category}' is not a valid option and will be ignored.")
-            continue
+#         if category not in df['category'].unique():
+#             st.warning(f"Warning: Category '{category}' is not a valid option and will be ignored.")
+#             continue
 
-        if len(parts) == 1:
-            # Only category provided, use default quantity = 1
-            user_desired_categories_with_quantities.append({"category": category, "quantity": quantity})
-        elif len(parts) == 2:
-            try:
-                quantity = int(parts[1].strip())
-                if quantity <= 0:
-                    st.warning(f"Warning: Quantity for '{category}' must be a positive integer. Ignoring '{item_str}'.")
-                    continue
-                user_desired_categories_with_quantities.append({"category": category, "quantity": quantity})
-            except ValueError:
-                st.warning(f"Warning: Quantity for '{category}' is not a valid number and will be ignored. Please enter an integer.")
-        else:
-            st.warning(f"Warning: Invalid input format for '{item_str}'. Please use 'Category' or 'Category:Quantity'.")
+#         if len(parts) == 1:
+#             # Only category provided, use default quantity = 1
+#             user_desired_categories_with_quantities.append({"category": category, "quantity": quantity})
+#         elif len(parts) == 2:
+#             try:
+#                 quantity = int(parts[1].strip())
+#                 if quantity <= 0:
+#                     st.warning(f"Warning: Quantity for '{category}' must be a positive integer. Ignoring '{item_str}'.")
+#                     continue
+#                 user_desired_categories_with_quantities.append({"category": category, "quantity": quantity})
+#             except ValueError:
+#                 st.warning(f"Warning: Quantity for '{category}' is not a valid number and will be ignored. Please enter an integer.")
+#         else:
+#             st.warning(f"Warning: Invalid input format for '{item_str}'. Please use 'Category' or 'Category:Quantity'.")
 
 # Button to trigger recommendations
 if st.button("Generate Recommendations"):
