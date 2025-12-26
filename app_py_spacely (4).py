@@ -202,7 +202,7 @@ st.header("Chat Input")
 
 user_prompt = st.text_input(
     "Masukkan kebutuhan furniture Anda (budget WAJIB)",
-    placeholder="Contoh: Budget Rp 5000000, bed 2, chair (min 820.000)"
+    placeholder="Contoh: Budget Rp 5000000, bed 2, chair (min 811.268)"
 )
 
 # Button to trigger recommendations
