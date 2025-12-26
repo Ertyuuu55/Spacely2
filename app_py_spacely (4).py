@@ -270,6 +270,17 @@ if st.button("Generate Recommendations"):
 
                 if remaining_budget_idr > 0:
                     st.info(f"Sisa Budget Anda: {format_rupiah(remaining_budget_idr)}")
+                    # Suggestion tambahan (tidak otomatis)
+                    suggestions = df[
+                        (df['price'] * USD_TO_IDR <= remaining_budget_idr)
+                    ].sort_values('price').head(3)
+                    
+                    if not suggestions.empty:
+                        st.markdown("💡 **Dengan sisa budget ini, Anda masih bisa membeli:**")
+                        for _, row in suggestions.iterrows():
+                            icon = ICON_MAP.get(row['category'].lower(), "🛒")
+                            st.write(f"- {icon} {row['category'].capitalize()} — {format_rupiah(row['price'] * USD_TO_IDR)}")
+
                 elif remaining_budget_idr == 0:
                     st.info("Budget Anda pas.")
                 else:
