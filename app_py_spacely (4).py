@@ -97,32 +97,40 @@ def parse_user_prompt(prompt, df):
 
     cleaned_numbers = [int(n.replace('.', '')) for n in numbers]
 
-    # Budget = angka terbesar
+    # Budget = angka TERBESAR
     budget = max(cleaned_numbers)
 
     desired = []
 
     for cat in categories:
-        # Pola: "bed 2"
-        match_after = re.search(rf'\b{cat}\s+(\d+)', prompt)
-        # Pola: "2 bed"
-        match_before = re.search(rf'(\d+)\s+{cat}\b', prompt)
+        # Cari posisi kategori
+        for match in re.finditer(rf'\b{cat}\b', prompt):
+            cat_pos = match.start()
 
-        if match_after:
-            qty = int(match_after.group(1))
-        elif match_before:
-            qty = int(match_before.group(1))
-        else:
-            # kategori disebut tanpa jumlah → default 1
-            if re.search(rf'\b{cat}\b', prompt):
-                qty = 1
-            else:
-                continue
+            # Cari angka terdekat sebelum & sesudah
+            nearest_qty = None
+            min_distance = float('inf')
 
-        desired.append({
-            "category": cat,
-            "quantity": qty
-        })
+            for num_match in re.finditer(r'\d+', prompt):
+                num = int(num_match.group())
+                if num == budget:
+                    continue  # skip budget
+
+                distance = min(
+                    abs(num_match.start() - cat_pos),
+                    abs(num_match.end() - cat_pos)
+                )
+
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_qty = num
+
+            qty = nearest_qty if nearest_qty else 1
+
+            desired.append({
+                "category": cat,
+                "quantity": qty
+            })
 
     return budget, desired, None
 
