@@ -89,39 +89,51 @@ def parse_user_prompt(prompt, df):
     tokens = prompt.lower().split()
     categories = set(df['category'].str.lower().unique())
 
+    budget = None
     desired = {}
-    numbers_used = set()
-    pairs = []
 
-    # 1. Tangkap semua pasangan quantity–category (dua arah)
-    for i in range(len(tokens)):
+    i = 0
+    while i < len(tokens):
         token = tokens[i]
 
-        # Pola: 2 bed
-        if token.isdigit() and i + 1 < len(tokens) and tokens[i + 1] in categories:
-            pairs.append((tokens[i + 1], int(token)))
-            numbers_used.add(token)
+        # Jika token angka
+        if token.replace('.', '').isdigit():
+            num = int(token.replace('.', ''))
 
-        # Pola: bed 2
-        if token in categories and i + 1 < len(tokens) and tokens[i + 1].isdigit():
-            pairs.append((token, int(tokens[i + 1])))
-            numbers_used.add(tokens[i + 1])
+            # Cek pola: 2 bed
+            if i + 1 < len(tokens) and tokens[i + 1] in categories:
+                cat = tokens[i + 1]
+                if cat not in desired:
+                    desired[cat] = num
+                i += 2
+                continue
 
-    # Simpan ke dictionary (1 kategori = 1 quantity)
-    for cat, qty in pairs:
-        if cat not in desired:
-            desired[cat] = qty
+            # Kandidat budget
+            if budget is None or num > budget:
+                budget = num
+            i += 1
+            continue
 
-    # 2. Tentukan budget → angka TERBESAR yang BUKAN quantity
-    all_numbers = [int(t) for t in tokens if t.isdigit()]
-    candidate_budgets = [
-        n for n in all_numbers if str(n) not in numbers_used
-    ]
+        # Jika token kategori
+        if token in categories:
+            # Cek pola: bed 2
+            if i + 1 < len(tokens) and tokens[i + 1].replace('.', '').isdigit():
+                qty = int(tokens[i + 1].replace('.', ''))
+                if token not in desired:
+                    desired[token] = qty
+                i += 2
+                continue
 
-    if not candidate_budgets:
+            # Default quantity = 1
+            if token not in desired:
+                desired[token] = 1
+            i += 1
+            continue
+
+        i += 1
+
+    if budget is None:
         return None, None, "Budget tidak ditemukan."
-
-    budget = max(candidate_budgets)
 
     desired_list = [
         {"category": k, "quantity": v} for k, v in desired.items()
