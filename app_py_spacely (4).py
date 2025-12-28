@@ -190,7 +190,6 @@ def select_furniture_based_on_request(df, budget, requested_items):
             else:
                 break  # budget sudah tidak cukup, hentikan
     
-        # 🔴 LOGIKA PESAN (INI YANG BARU)
         if selected_qty == 0:
             messages.append(
                 f"Budget tidak mencukupi untuk kategori '{category}' sebanyak {qty} item."
